@@ -30,9 +30,14 @@ target_link_libraries(sunshine ${SUNSHINE_EXTERNAL_LIBRARIES} ${EXTRA_LIBS})
 target_compile_definitions(sunshine PUBLIC ${SUNSHINE_DEFINITIONS})
 
 # Logging integration flags are provided via SUNSHINE_DEFINITIONS to avoid duplicates
-set_target_properties(sunshine PROPERTIES CXX_STANDARD 23
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(sunshine PROPERTIES CXX_STANDARD 23)
+# A versioned executable plus symlink is a Unix install convention. Inside a macOS .app the main
+# executable must be a regular file: codesign rejects the symlink, and install() copies both files.
+if(NOT (APPLE AND NOT SUNSHINE_BUILD_HOMEBREW))
+    set_target_properties(sunshine PROPERTIES
+            VERSION ${PROJECT_VERSION}
+            SOVERSION ${PROJECT_VERSION_MAJOR})
+endif()
 
 # CLion complains about unknown flags after running cmake, and cannot add symbols to the index for cuda files
 if(CUDA_INHERIT_COMPILE_OPTIONS)
