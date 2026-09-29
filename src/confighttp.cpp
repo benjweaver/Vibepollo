@@ -411,12 +411,14 @@ namespace confighttp {
              key == "rtx_hdr_peak_brightness";
     }
 
+#ifdef _WIN32  // only the RTX Video HDR overrides use it
     std::string encode_config_override_value(const nlohmann::json &value) {
       if (value.is_string()) {
         return value.get<std::string>();
       }
       return value.dump();
     }
+#endif
 
     void normalize_adapter_config_pair(nlohmann::json &config_object) {
       if (!config_object.is_object()) {
@@ -571,7 +573,6 @@ namespace confighttp {
 
   // SESSION COOKIE
   std::string sessionCookie;
-  static std::chrono::time_point<std::chrono::steady_clock> cookie_creation_time;
 
   /**
    * @brief Log the request details.
@@ -2395,6 +2396,7 @@ namespace confighttp {
 
     std::optional<size_t> target_index = index_from_body ? index_from_body : index_from_path;
 
+#ifdef _WIN32  // Playnite is Windows-only
     // Detect if the app being removed is the Playnite fullscreen launcher
     auto is_playnite_fullscreen = [](const nlohmann::json &app) -> bool {
       try {
@@ -2413,6 +2415,7 @@ namespace confighttp {
       } catch (...) {}
       return false;
     };
+#endif
 
     try {
       std::string content = file_handler::read_file(config::stream.file_apps.c_str());

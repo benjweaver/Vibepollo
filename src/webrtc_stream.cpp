@@ -115,13 +115,11 @@ namespace webrtc_stream {
   namespace {
     constexpr std::size_t kMaxVideoFrames = 4;
     constexpr std::size_t kMaxAudioFrames = 4;
-    constexpr short kAbsCoordinateMax = 32767;
     constexpr int kDefaultWidth = 1920;
     constexpr int kDefaultHeight = 1080;
     constexpr int kDefaultFps = 60;
     constexpr int kDefaultAudioChannels = 2;
     constexpr int kDefaultAudioPacketMs = 10;
-    constexpr std::size_t kEncodedPrefixLogLimit = 5;
     constexpr auto kKeyframeRequestInterval = std::chrono::milliseconds {100};
     constexpr auto kVideoPacingSlackLatency = std::chrono::milliseconds {0};
     constexpr auto kVideoPacingSlackBalanced = std::chrono::milliseconds {2};
@@ -130,6 +128,9 @@ namespace webrtc_stream {
     constexpr auto kVideoPacingSlackMax = std::chrono::milliseconds {10};
     constexpr auto kVideoMaxFrameAgeMin = std::chrono::milliseconds {5};
     constexpr auto kVideoMaxFrameAgeMax = std::chrono::milliseconds {100};
+#ifdef SUNSHINE_ENABLE_WEBRTC  // only the WebRTC transport uses these
+    constexpr short kAbsCoordinateMax = 32767;
+    constexpr std::size_t kEncodedPrefixLogLimit = 5;
     constexpr auto kAudioMaxFrameAge = std::chrono::milliseconds {kDefaultAudioPacketMs * kMaxAudioFrames};
     constexpr auto kWebrtcStartupKeyframeHold = std::chrono::milliseconds {3000};
     constexpr auto kWebrtcStartupKeyframeDeadline = std::chrono::milliseconds {8000};
@@ -160,6 +161,7 @@ namespace webrtc_stream {
       }
       delete context;
     }
+#endif
 
     struct WebRtcCaptureConfigKey {
       std::string app_uuid;
@@ -819,6 +821,7 @@ namespace webrtc_stream {
       }
     }
 
+#ifdef SUNSHINE_ENABLE_WEBRTC  // only the WebRTC transport uses these
     bool starts_with_annexb(const std::vector<std::uint8_t> &data) {
       if (data.size() < 3) {
         return false;
@@ -841,6 +844,7 @@ namespace webrtc_stream {
       }
       return oss.str();
     }
+#endif
 
     struct WebRtcStreamStartParams {
       int fps = 0;
@@ -1005,13 +1009,14 @@ namespace webrtc_stream {
       return *pool;
     }
 
+    std::shared_ptr<safe::mail_raw_t> current_capture_mail();
+
+#ifdef SUNSHINE_ENABLE_WEBRTC  // only the WebRTC transport uses these
     std::mutex input_mutex;
     std::shared_ptr<safe::mail_raw_t> input_mail;
     std::shared_ptr<input::input_t> input_context;
     std::mutex gamepad_mutex;
     std::bitset<16> webrtc_gamepads;
-
-    std::shared_ptr<safe::mail_raw_t> current_capture_mail();
 
     std::shared_ptr<input::input_t> current_input_context() {
       auto capture_mail = current_capture_mail();
@@ -1478,11 +1483,13 @@ namespace webrtc_stream {
       }
       return 0;
     }
+#endif
 
 #ifdef SUNSHINE_ENABLE_WEBRTC
     void request_webrtc_latency_resync(std::string_view session_id);
 #endif
 
+#ifdef SUNSHINE_ENABLE_WEBRTC  // only the WebRTC transport uses these
     void handle_input_message(std::string_view payload, std::string_view session_id = {}) {
       if (payload.empty()) {
         return;
@@ -1668,6 +1675,7 @@ namespace webrtc_stream {
         return;
       }
     }
+#endif
 
 #ifdef SUNSHINE_ENABLE_WEBRTC
     struct SessionIceContext {
@@ -1933,6 +1941,7 @@ namespace webrtc_stream {
     }
 #endif
 
+#ifdef SUNSHINE_ENABLE_WEBRTC  // only the WebRTC transport uses these
     std::optional<std::string> build_gamepad_feedback_payload(const platf::gamepad_feedback_msg_t &msg) {
       nlohmann::json payload;
       payload["type"] = "gamepad_feedback";
@@ -1958,6 +1967,7 @@ namespace webrtc_stream {
       }
       return payload.dump();
     }
+#endif
 
     #ifdef SUNSHINE_ENABLE_WEBRTC
     void send_gamepad_feedback_payload(const std::string &payload) {
@@ -2157,6 +2167,7 @@ namespace webrtc_stream {
       config.framerate = rtsp_config->video.framerate;
     }
 
+#ifdef SUNSHINE_ENABLE_WEBRTC  // only the WebRTC transport uses these
     std::string_view trim_ascii(std::string_view value) {
       while (!value.empty() && (value.front() == ' ' || value.front() == '\t')) {
         value.remove_prefix(1);
@@ -2539,6 +2550,7 @@ namespace webrtc_stream {
 
       return result;
     }
+#endif
 
 #ifdef SUNSHINE_ENABLE_WEBRTC
     const char *lwrtc_codec_name(lwrtc_video_codec_t codec) {

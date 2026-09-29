@@ -4733,7 +4733,7 @@ namespace video {
 #ifdef _WIN32
     const bool legacy_amf_session = session_encoder == &amdvce_ffmpeg;
 #else
-    const bool legacy_amf_session = false;
+    bool legacy_amf_session = false;  // no AMF here; not const, so the teardown thread captures it as on Windows
 #endif
     bool native_amf_runtime_failed = false;
     const auto session_encoder_flags = session_encoder->flags;
@@ -5813,8 +5813,8 @@ namespace video {
 
     auto touch_port_event = mail->event<input::touch_port_t>(mail::touch_port);
     auto hdr_event = mail->event<hdr_info_t>(mail::hdr);
-    int consecutive_encoder_initialization_failures = 0;
 #ifdef _WIN32
+    int consecutive_encoder_initialization_failures = 0;
     int consecutive_native_amf_runtime_failures = 0;
 #endif
 
@@ -5968,8 +5968,8 @@ namespace video {
         std::this_thread::sleep_for(100ms);
         continue;
       }
-      consecutive_encoder_initialization_failures = 0;
 #ifdef _WIN32
+      consecutive_encoder_initialization_failures = 0;
       consecutive_native_amf_runtime_failures = 0;
 #endif
     }

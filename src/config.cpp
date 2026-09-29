@@ -1860,9 +1860,11 @@ namespace config {
     }
     string_f(vars, "output_name", video.output_name);
 
+#ifdef _WIN32
     const auto virtual_display_mode_it = vars.find("virtual_display_mode");
     const bool virtual_display_mode_specified =
       virtual_display_mode_it != vars.end() && !virtual_display_mode_it->second.empty();
+#endif
     generic_f(vars, "virtual_display_mode", video.virtual_display_mode, virtual_display_mode_from_view);
 #ifdef _WIN32
     // The virtual-display pipeline is built around Windows 11 capture features (WGC
@@ -2506,6 +2508,7 @@ namespace config {
       g_base_adapter_config_valid = true;
     }
 
+#ifdef _WIN32  // RTX Video HDR is Windows-only
     bool is_rtx_hdr_live_key(std::string_view key) {
       return key == "rtx_hdr" ||
              key == "rtx_hdr_sdr_brightness" ||
@@ -2531,6 +2534,7 @@ namespace config {
       }
       return false;
     }
+#endif
 
     bool is_valid_override_key(const std::string_view key) {
       if (key.empty() || key.size() > 128) {
@@ -2875,11 +2879,11 @@ namespace config {
 #endif
 
     std::uint64_t set_runtime_output_name_override_impl(std::optional<std::string> output_name) {
-      bool should_schedule_deferred_reapply = false;
       std::uint64_t lease = 0;
 
       std::unique_lock<std::shared_mutex> lock(g_output_override_mutex);
 #ifdef _WIN32
+      bool should_schedule_deferred_reapply = false;
       // Increment for every publication or clear. A recovery rollback can
       // therefore clear only the exact override it published, even if a
       // newer session selects the same device id.
@@ -3103,12 +3107,14 @@ namespace config {
       const auto prev_dd_virtual_display_permanent_count_configured = video.dd.virtual_display_permanent_count_configured;
       const auto prev_dd_snapshot_exclude_devices = video.dd.snapshot_exclude_devices;
       const auto prev_dd_dummy_plug = video.dd.wa.dummy_plug_hdr10;
+#ifdef _WIN32
       const auto prev_rtx_hdr_enabled = video.rtx_hdr.enabled;
       const auto prev_rtx_hdr_sdr_brightness = video.rtx_hdr.sdr_brightness;
       const auto prev_rtx_hdr_contrast = video.rtx_hdr.contrast;
       const auto prev_rtx_hdr_saturation = video.rtx_hdr.saturation;
       const auto prev_rtx_hdr_middle_gray = video.rtx_hdr.middle_gray;
       const auto prev_rtx_hdr_peak_brightness = video.rtx_hdr.peak_brightness;
+#endif
       const auto prev_session_history_enabled = sunshine.session_history_enabled;
 
       auto vars = parse_config(file_handler::read_file(sunshine.config_file.c_str()));
@@ -3219,12 +3225,12 @@ namespace config {
       filtered.erase("adapter_pnp_id");
     }
 
-    bool rtx_hdr_live_changed = false;
-    {
-      std::scoped_lock lk(g_runtime_overrides_mutex);
-      rtx_hdr_live_changed = rtx_hdr_live_overrides_changed(g_runtime_config_overrides, filtered);
-      g_runtime_config_overrides = std::move(filtered);
-    }
+    std::unique_lock lk(g_runtime_overrides_mutex);
+#ifdef _WIN32
+    const bool rtx_hdr_live_changed = rtx_hdr_live_overrides_changed(g_runtime_config_overrides, filtered);
+#endif
+    g_runtime_config_overrides = std::move(filtered);
+    lk.unlock();
 #ifdef _WIN32
     if (rtx_hdr_live_changed) {
       platf::rtx_hdr::notify_live_settings_changed();
@@ -3233,14 +3239,14 @@ namespace config {
   }
 
   void clear_runtime_config_overrides() {
-    bool rtx_hdr_live_changed = false;
-    {
-      std::scoped_lock lk(g_runtime_overrides_mutex);
-      rtx_hdr_live_changed = std::ranges::any_of(g_runtime_config_overrides, [](const auto &entry) {
-        return is_rtx_hdr_live_key(entry.first);
-      });
-      g_runtime_config_overrides.clear();
-    }
+    std::unique_lock lk(g_runtime_overrides_mutex);
+#ifdef _WIN32
+    const bool rtx_hdr_live_changed = std::ranges::any_of(g_runtime_config_overrides, [](const auto &entry) {
+      return is_rtx_hdr_live_key(entry.first);
+    });
+#endif
+    g_runtime_config_overrides.clear();
+    lk.unlock();
 #ifdef _WIN32
     if (rtx_hdr_live_changed) {
       platf::rtx_hdr::notify_live_settings_changed();

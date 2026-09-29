@@ -3351,7 +3351,9 @@ namespace nvhttp {
         display_startup_deadline
       );
 #endif
+#ifdef _WIN32
       const bool allow_display_changes = true;
+#endif
       auto launch_session = make_launch_session_from_snapshot(host_audio, is_input_only, args, verified_client, &request_client_identity);
       std::optional<std::string> pending_output_override;
       auto output_override_guard = util::fail_guard([&]() {
