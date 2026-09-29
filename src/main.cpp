@@ -56,6 +56,7 @@
 
 #ifdef __APPLE__
   #include "platform/macos/misc.h"
+  #include "platform/macos/virtual_display.h"
 
   #include <mach-o/dyld.h>
 #endif
@@ -245,6 +246,13 @@ WINAPI BOOL ConsoleCtrlHandler(DWORD type) {
 #endif
 
 int main(int argc, char *argv[]) {
+#ifdef __APPLE__
+  // Helper that turns physical displays back on if the main process dies mid-stream.
+  if (argc > 1 && argv[1] == platf::macos_virtual_display::restore_watchdog_arg) {
+    return platf::macos_virtual_display::run_restore_watchdog(argc, argv);
+  }
+#endif
+
   lifetime::argv = argv;
 
 #ifdef _WIN32
@@ -867,8 +875,9 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef __APPLE__
-  // AppKit only delivers events on the main thread, so it waits here instead: the menu bar
-  // depends on them.
+  // AppKit only delivers events on the main thread, so it waits here instead: the menu bar and
+  // the virtual display's display configuration both depend on them.
+  platf::macos_virtual_display::recover_disabled_displays();
   platf::run_main_event_loop([&shutdown_event]() {
     return shutdown_event->peek();
   });
