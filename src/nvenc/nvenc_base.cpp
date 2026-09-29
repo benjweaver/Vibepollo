@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <format>
 #include <optional>
 
@@ -1080,7 +1081,8 @@ namespace nvenc {
       return false;
     }
 
-    const bool is_hevc = (saved_init_params.encodeGUID == NV_ENC_CODEC_HEVC_GUID);
+    // memcmp: GUID only has operator== via the Windows SDK headers.
+    const bool is_hevc = std::memcmp(&saved_init_params.encodeGUID, &NV_ENC_CODEC_HEVC_GUID, sizeof(GUID)) == 0;
     const uint32_t new_bitrate_bps = static_cast<uint32_t>(bitrate_kbps) * 1000u;
     const uint32_t prev_bitrate_bps = current_enc_config.rcParams.averageBitRate;
 
