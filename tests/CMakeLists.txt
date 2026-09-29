@@ -250,7 +250,7 @@ sunshine_add_test_target(
         "${CMAKE_CURRENT_LIST_DIR}/unit/test_thread_safe.cpp"
     PRODUCT_SOURCES
     DEFINITIONS
-    LINK_LIBRARIES GTest::gtest
+    LINK_LIBRARIES GTest::gtest nlohmann_json::nlohmann_json
     DEPENDENCIES
 )
 
