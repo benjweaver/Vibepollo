@@ -41,6 +41,7 @@ extern "C" {
 #include "display_helper_integration.h"
 #include "globals.h"
 #include "input.h"
+#include "jthread.h"
 #include "logging.h"
 #include "network.h"
 #include "nvhttp.h"
@@ -160,7 +161,7 @@ namespace stream {
       explicit join_deadline_t(std::shared_ptr<std::atomic<const char *>> hung_stage):
           hung_stage_ {std::move(hung_stage)} {
         try {
-          worker_ = std::jthread([this](std::stop_token) {
+          worker_ = util::jthread([this](util::stop_token) {
             run();
           });
         } catch (const std::system_error &e) {
@@ -223,7 +224,7 @@ namespace stream {
       std::mutex mutex_;
       std::condition_variable cv_;
       state_e state_ {state_e::armed};
-      std::jthread worker_;
+      util::jthread worker_;
     };
   }  // namespace
 

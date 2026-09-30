@@ -21,6 +21,7 @@
 #include "globals.h"
 #include "host_stats.h"
 #include "httpcommon.h"
+#include "jthread.h"
 #include "logging.h"
 #include "main.h"
 #include "nvhttp.h"
@@ -96,7 +97,7 @@ namespace {
     explicit shutdown_deadline_t(std::atomic_bool *signal_requested):
         signal_requested_ {signal_requested} {
       try {
-        worker_ = std::jthread([this](std::stop_token) {
+        worker_ = util::jthread([this](util::stop_token) {
           run();
         });
       } catch (const std::system_error &e) {
@@ -180,7 +181,7 @@ namespace {
     std::condition_variable cv_;
     state_e state_ {state_e::idle};
     std::atomic_bool *signal_requested_ = nullptr;
-    std::jthread worker_;
+    util::jthread worker_;
   };
 }  // namespace
 
