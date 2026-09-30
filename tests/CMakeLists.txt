@@ -200,6 +200,12 @@ target_include_directories(sunshine_test_simple_web_headers SYSTEM INTERFACE
 target_link_libraries(sunshine_test_simple_web_headers INTERFACE
     OpenSSL::SSL OpenSSL::Crypto)
 
+# Winsock on Windows; POSIX sockets need no library.
+add_library(sunshine_test_sockets INTERFACE)
+if(WIN32)
+    target_link_libraries(sunshine_test_sockets INTERFACE ws2_32)
+endif()
+
 add_library(sunshine_test_moonlight_headers INTERFACE)
 target_include_directories(sunshine_test_moonlight_headers SYSTEM INTERFACE
     "${SUNSHINE_TEST_REPOSITORY_ROOT}/third-party")
@@ -337,38 +343,43 @@ sunshine_register_component(NAME test_component_stream_protocol TEST_SOURCE unit
 sunshine_register_component(NAME test_component_config_parse TEST_SOURCE unit/test_config_parse.cpp
     PRODUCT_SOURCES)
 sunshine_register_component(NAME test_component_config_playnite TEST_SOURCE test_config_playnite.cpp
-    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/config_playnite_parse.cpp")
+    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/config_playnite_parse.cpp"
+    LINK_LIBRARIES nlohmann_json::nlohmann_json)
 sunshine_register_component(NAME test_component_file_handler TEST_SOURCE unit/test_file_handler.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/file_handler_core.cpp")
 sunshine_register_component(NAME test_component_state_storage TEST_SOURCE unit/test_state_storage.cpp
-    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/state_storage_policy.cpp")
+    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/state_storage_policy.cpp"
+    LINK_LIBRARIES Boost::property_tree)
 sunshine_register_component(NAME test_component_http_auth TEST_SOURCE unit/test_http_auth.cpp
     EXTRA_TEST_SOURCES "${CMAKE_CURRENT_LIST_DIR}/unit/test_confighttp.cpp"
     PRODUCT_SOURCES
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_auth_policy.cpp"
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_auth_request_policy.cpp"
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/config_http_policy.cpp"
-    LINK_LIBRARIES GTest::gmock sunshine_test_simple_web_headers ws2_32)
+    LINK_LIBRARIES GTest::gmock sunshine_test_simple_web_headers sunshine_test_sockets Boost::asio Boost::function Boost::property_tree nlohmann_json::nlohmann_json)
 sunshine_register_component(NAME test_component_http_policy TEST_SOURCE unit/test_httpcommon.cpp
-    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_policy.cpp")
+    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_policy.cpp"
+    LINK_LIBRARIES Boost::property_tree)
 sunshine_register_component(NAME test_component_network_policy TEST_SOURCE unit/test_network.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/network_policy.cpp"
-    LINK_LIBRARIES ws2_32)
+    LINK_LIBRARIES sunshine_test_sockets Boost::algorithm Boost::asio)
 sunshine_register_component(NAME test_component_input_validation TEST_SOURCE unit/test_input.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/input_validation_policy.cpp"
     LINK_LIBRARIES sunshine_test_moonlight_headers)
 sunshine_register_component(NAME test_component_display_device_policy TEST_SOURCE unit/test_display_device.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/display_device_policy.cpp")
 sunshine_register_component(NAME test_component_process_policy TEST_SOURCE unit/test_process.cpp
-    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/app_catalog_policy.cpp")
+    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/app_catalog_policy.cpp"
+    LINK_LIBRARIES Boost::crc)
 sunshine_register_component(NAME test_component_process_framegen_json TEST_SOURCE unit/test_process_framegen_json.cpp
-    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/app_framegen_config.cpp")
+    PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/app_framegen_config.cpp"
+    LINK_LIBRARIES nlohmann_json::nlohmann_json)
 sunshine_register_component(NAME test_component_session_history TEST_SOURCE unit/test_session_history.cpp
     PRODUCT_SOURCES
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/session_history_storage.cpp"
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/session_history_storage_diagnostics.cpp"
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/session_history_policy.cpp"
-    LINK_LIBRARIES PkgConfig::SQLITE3)
+    LINK_LIBRARIES PkgConfig::SQLITE3 nlohmann_json::nlohmann_json)
 sunshine_register_component(NAME test_component_host_stats TEST_SOURCE unit/test_host_stats.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/host_stats_service.cpp")
 sunshine_register_component(NAME test_component_audio_policy TEST_SOURCE unit/test_audio.cpp
@@ -383,7 +394,7 @@ sunshine_register_component(NAME test_component_entry_metadata TEST_SOURCE unit/
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/entry_metadata.cpp")
 sunshine_register_component(NAME test_component_config_http_policy TEST_SOURCE unit/test_config_http_policy.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/config_http_policy.cpp"
-    LINK_LIBRARIES ws2_32)
+    LINK_LIBRARIES sunshine_test_sockets Boost::asio)
 sunshine_register_component(NAME test_component_http_pairing_policy TEST_SOURCE unit/test_http_pairing.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_pairing_policy.cpp")
 sunshine_register_component(NAME test_component_video_policy TEST_SOURCE unit/test_video.cpp
@@ -392,7 +403,8 @@ sunshine_register_component(NAME test_component_encoder_probe_policy TEST_SOURCE
 sunshine_register_component(NAME test_component_resource_config_catalog TEST_SOURCE unit/test_config_catalog_contract.cpp
     INCLUDE_DIRECTORIES "${SUNSHINE_TEST_GENERATED_INCLUDE_DIR}")
 sunshine_register_component(NAME test_component_resource_locale_catalog TEST_SOURCE integration/test_locale_consistency.cpp
-    SUPPORT_SOURCES "${CMAKE_CURRENT_LIST_DIR}/support/file_handler_read_only.cpp")
+    SUPPORT_SOURCES "${CMAKE_CURRENT_LIST_DIR}/support/file_handler_read_only.cpp"
+    LINK_LIBRARIES nlohmann_json::nlohmann_json)
 if(TARGET test_component_resource_locale_catalog)
     set_tests_properties(test_component_resource_locale_catalog PROPERTIES
         WORKING_DIRECTORY "${SUNSHINE_TEST_REPOSITORY_ROOT}")
