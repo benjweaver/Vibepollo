@@ -200,6 +200,15 @@ target_include_directories(sunshine_test_simple_web_headers SYSTEM INTERFACE
 target_link_libraries(sunshine_test_simple_web_headers INTERFACE
     OpenSSL::SSL OpenSSL::Crypto)
 
+# Boost headers the component tests include. A system Boost has them all on its include path
+# (Boost::headers); a fetched, modular Boost has a target per library instead.
+add_library(sunshine_test_boost_headers INTERFACE)
+foreach(_sunshine_test_boost_library IN ITEMS headers algorithm asio crc function property_tree)
+    if(TARGET Boost::${_sunshine_test_boost_library})
+        target_link_libraries(sunshine_test_boost_headers INTERFACE Boost::${_sunshine_test_boost_library})
+    endif()
+endforeach()
+
 # Winsock on Windows; POSIX sockets need no library.
 add_library(sunshine_test_sockets INTERFACE)
 if(WIN32)
@@ -349,20 +358,20 @@ sunshine_register_component(NAME test_component_file_handler TEST_SOURCE unit/te
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/file_handler_core.cpp")
 sunshine_register_component(NAME test_component_state_storage TEST_SOURCE unit/test_state_storage.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/state_storage_policy.cpp"
-    LINK_LIBRARIES Boost::property_tree)
+    LINK_LIBRARIES sunshine_test_boost_headers)
 sunshine_register_component(NAME test_component_http_auth TEST_SOURCE unit/test_http_auth.cpp
     EXTRA_TEST_SOURCES "${CMAKE_CURRENT_LIST_DIR}/unit/test_confighttp.cpp"
     PRODUCT_SOURCES
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_auth_policy.cpp"
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_auth_request_policy.cpp"
         "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/config_http_policy.cpp"
-    LINK_LIBRARIES GTest::gmock sunshine_test_simple_web_headers sunshine_test_sockets Boost::asio Boost::function Boost::property_tree nlohmann_json::nlohmann_json)
+    LINK_LIBRARIES GTest::gmock sunshine_test_simple_web_headers sunshine_test_sockets sunshine_test_boost_headers nlohmann_json::nlohmann_json)
 sunshine_register_component(NAME test_component_http_policy TEST_SOURCE unit/test_httpcommon.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_policy.cpp"
-    LINK_LIBRARIES Boost::property_tree)
+    LINK_LIBRARIES sunshine_test_boost_headers)
 sunshine_register_component(NAME test_component_network_policy TEST_SOURCE unit/test_network.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/network_policy.cpp"
-    LINK_LIBRARIES sunshine_test_sockets Boost::algorithm Boost::asio)
+    LINK_LIBRARIES sunshine_test_sockets sunshine_test_boost_headers)
 sunshine_register_component(NAME test_component_input_validation TEST_SOURCE unit/test_input.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/input_validation_policy.cpp"
     LINK_LIBRARIES sunshine_test_moonlight_headers)
@@ -370,7 +379,7 @@ sunshine_register_component(NAME test_component_display_device_policy TEST_SOURC
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/display_device_policy.cpp")
 sunshine_register_component(NAME test_component_process_policy TEST_SOURCE unit/test_process.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/app_catalog_policy.cpp"
-    LINK_LIBRARIES Boost::crc)
+    LINK_LIBRARIES sunshine_test_boost_headers)
 sunshine_register_component(NAME test_component_process_framegen_json TEST_SOURCE unit/test_process_framegen_json.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/app_framegen_config.cpp"
     LINK_LIBRARIES nlohmann_json::nlohmann_json)
@@ -394,7 +403,7 @@ sunshine_register_component(NAME test_component_entry_metadata TEST_SOURCE unit/
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/entry_metadata.cpp")
 sunshine_register_component(NAME test_component_config_http_policy TEST_SOURCE unit/test_config_http_policy.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/config_http_policy.cpp"
-    LINK_LIBRARIES sunshine_test_sockets Boost::asio)
+    LINK_LIBRARIES sunshine_test_sockets sunshine_test_boost_headers)
 sunshine_register_component(NAME test_component_http_pairing_policy TEST_SOURCE unit/test_http_pairing.cpp
     PRODUCT_SOURCES "${SUNSHINE_TEST_REPOSITORY_ROOT}/src/http_pairing_policy.cpp")
 sunshine_register_component(NAME test_component_video_policy TEST_SOURCE unit/test_video.cpp
