@@ -138,7 +138,9 @@ namespace {
       status_item.button.image = nil;
       status_item.button.title = @(state.tooltip.c_str());
     }
-    status_item.button.toolTip = @(state.tooltip.c_str());
+    // No toolTip: streamed input moves the cursor with CGWarpMouseCursorPosition, which sends
+    // no mouse-moved events, so AppKit never sees the cursor leave the status item and shows
+    // the tooltip wherever the cursor ends up.
     status_item.menu = build_menu(state.menu);
   }
 
